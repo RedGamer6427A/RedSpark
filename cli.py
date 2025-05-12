@@ -134,6 +134,6 @@ def confirmed_input(msg: str, function: Callable[[str], R]) -> R:
     if b:
         return a
     else:
-        message("Retrying...")
+        colored_message("Retrying%l...", Colors.GREEN)
         return confirmed_input(msg, function)
 
