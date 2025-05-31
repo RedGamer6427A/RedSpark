@@ -1,9 +1,15 @@
 import enum
+import itertools
+import msvcrt
+import shutil
+import sys
+import threading
+import time
+from getpass import getpass
 
 import colorama
 
-from typing import Callable, TypeVar
-
+from typing import Callable, TypeVar, Optional
 
 colorama.init(autoreset=True)
 
@@ -86,6 +92,9 @@ def forbidden(msg: str) -> None:
 def warning(msg: str) -> None:
     colored_message(msg, Colors.YELLOW)
 
+def warn(msg: str) -> None:
+    warning(msg)
+
 
 def str_input(msg: str) -> str:
     return input(
@@ -137,3 +146,77 @@ def confirmed_input(msg: str, function: Callable[[str], R]) -> R:
         colored_message("Retrying%l...", Colors.GREEN)
         return confirmed_input(msg, function)
 
+def wait_for_continue(msg):
+    getpass(("%n"+msg+" ").replace("%n", colorama.Fore.BLUE).replace("%l", colorama.Fore.LIGHTBLUE_EX))
+
+def password_input(msg, rchar:Optional[str] = "*"):
+    if rchar is None:
+        rchar = ""
+    prompt = ("%n" + msg + "%l > ").replace("%l", colorama.Fore.LIGHTMAGENTA_EX).replace("%n", colorama.Fore.MAGENTA)
+    print(prompt, end="", flush=True)
+    password = []
+
+    while True:
+        char = msvcrt.getch()
+
+        if char == b'\r':  # Enter key
+            break
+        elif char == b'\x08':  # Backspace key
+            if password:
+                password.pop()
+                print("\b \b", end="", flush=True)  # Remove the last '*'
+        else:
+            password.append(char.decode())
+            print(rchar, end="", flush=True)
+
+    print()  # Move to the next line
+    return ''.join(password)
+
+
+def menu_selector(prompt, options):
+    """
+  Display a menu to the user and execute the selected function.
+
+  Parameters:
+  - options: dict, a dictionary where keys are strings (menu options) and values are functions.
+  - prompt: str, the prompt to display to the user.
+    """
+    selected = lambda: forbidden("Idk what but smth went wrong")
+    message("%l> %n"+prompt)
+
+    # Display the options with numerical indices
+    for index, key in enumerate(options, start=1):
+        message(f"%l{index}. %n{key}")
+    while True:
+        ok = False
+        # Display the prompt to the user
+
+        # Ask the user to enter an option number
+
+        user_choice = int_input("Enter the number of your choice") - 1
+
+        # Check if the user's choice is within the valid range
+        if 0 <= user_choice < len(options):
+            # Get the list of option keys and call the corresponding function
+            selected = options[list(options.keys())[user_choice]]
+            ok = True
+        else:
+            forbidden("Invalid option. Please try again.")
+
+        if ok:
+            break
+    selected()
+
+def cycling_message(interval: float, messages: list[str]):
+
+    def loop():
+        for message in itertools.cycle(messages):
+            width = shutil.get_terminal_size((80, 20)).columns
+            truncated = message[:width].ljust(width)
+
+            sys.stdout.write('\r\033[K' + truncated)
+            sys.stdout.flush()
+            time.sleep(interval)
+
+    thread = threading.Thread(target=loop, daemon=True)
+    thread.start()
