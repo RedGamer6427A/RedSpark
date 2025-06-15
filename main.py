@@ -4,6 +4,7 @@ import time
 from time import sleep
 import redspark.terminal.logger as logger
 import redspark.processing.string
+from redspark.processing.trees import Tree, Element
 from redspark.terminal import cli
 from redspark.terminal.cli import forbidden
 from redspark.timing import performance
@@ -68,12 +69,20 @@ def run_everything():
     cli.message("Mes%lsa%nge")
     cli.warning("Wa%lrn%ning")
     cli.forbidden("For%lbi%nden")
+def createTree():
+    print(Tree(
+        "Test",
+        Element("Testilui", color=0x00ffaa),
+         color=0xaa00ff
+    ).render())
+
 
 
 if __name__ == "__main__":
     options = {
         "Clear Logs Folder": clear_logs_folder,
         "Summon a demon": summon_demon,
-        "Run Everything": run_everything
+        "Run Everything": run_everything,
+        "Generate Yggdrasil": createTree
     }
     cli.menu_selector("Select what to do", options)
